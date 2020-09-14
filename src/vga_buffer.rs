@@ -122,30 +122,30 @@ impl fmt::Write for Writer { // Implements the write! and writeln! macros.
     }
 }
 
-use lazy_static::lazy_static;
-use spin::Mutex;
+use lazy_static::lazy_static; // Allows for static creation at runtime.
+use spin::Mutex; // Allows a static variable to be mutable (when within a Mutex container).
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) }, // This requires the Mutax wrapper over WRITER.
     });
 }
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*))); // Calls the _print function with the format args.
 }
 
-#[macro_export]
+#[macro_export] // Results in export of macro - causes crate::print! to be valid but NOT crate::vga_buffer::print!.
 macro_rules! println {
-    () => ($crate::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+    () => ($crate::print!("\n")); // Calls with nothing result in just a new line.
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*))); // Calls the print! macro wth a new line appended.
 }
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    WRITER.lock().write_fmt(args).unwrap(); // .lock() prevents reading/writing while it is being used here (I think).
 }
