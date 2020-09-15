@@ -2,21 +2,29 @@
 name = "rust_os"
 version = "0.1.0"
 authors = ["Hamish Cox <hamishwhc@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 volatile = "0.2.6"
 rlibc = "1.0.0"
 bootloader = "0.9.8"
 spin = "0.5.2"
+x86_64 = "0.11.0"
+uart_16550 = "0.2.0"
 
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
 
-# the profile used for `cargo build`
-[profile.dev]
-panic = "abort" # disable stack unwinding on panic
+[package.metadata.bootimage]
+test-args = [
+    "-device", "isa-debug-exit,iobase=0xf4,iosize=0x04",
+    "-serial", "stdio",
+    "-display", "none"
+]
+test-success-exit-code = 33         # (0x10 << 1) | 1
+test-timeout = 300
 
-# the profile used for `cargo build --release`
-[profile.release]
-panic = "abort" # disable stack unwinding on panic
+[[test]]
+name = "should_panic"
+harness = false
